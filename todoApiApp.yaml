@@ -22,22 +22,10 @@ spec:
             value: "3306"
           - name: MYSQL_USER
             value: dbuser
-#            valueFrom:
-#             secretKeyRef:
-#              name: dbsecret
-#              key: username
           - name: MYSQL_PASSWORD
             value: dbpassword
-#            valueFrom:
-#              secretKeyRef:
-#                name: dbsecret
-#                key: password
           - name: MYSQL_DB
             value: tododb
-#            valueFrom:
-#             secretKeyRef:
-#              name: dbsecret
-#              key: dbname
           ports:
             - containerPort: 8081
 
