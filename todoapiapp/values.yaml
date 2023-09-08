@@ -1,0 +1,19 @@
+deployment:
+  replicas: 3
+  todoAppContainer:
+    env:
+      mysqlDb: tododb
+      mysqlHost: mysql
+      mysqlPassword: dbpassword
+      mysqlPort: "3306"
+      mysqlUser: dbuser
+    image:
+      repository: ravindrl/todoapiapp
+      tag: "1.0"
+kubernetesClusterDomain: cluster.local
+service:
+  ports:
+  - port: 8081
+    protocol: TCP
+    targetPort: 8081
+  type: NodePort

@@ -1,0 +1,34 @@
+dbsecret:
+  dbname: "tododb"
+  password: "dbpassword"
+  rootpassword: "root"
+  username: "dbuser"
+dbusers:
+  createUserSql: |-
+    CREATE USER '$DB_USER'@'%' IDENTIFIED BY '$DB_PASSWORD';
+    GRANT ALL PRIVILEGES ON *.* TO '$DB_USER'@'%';
+kubernetesClusterDomain: cluster.local
+mysql:
+  servicename: mysql
+  envsubst:
+    args:
+    - sh
+    - -c
+    - cat /create-user.sql | envsubst > /docker-entrypoint-initdb.d/create-user.sql
+    image:
+      repository: bhgedigital/envsubst
+      tag: latest
+  mysql:
+    image:
+      repository: mysql
+      tag: latest
+  ports:
+  - port: 3306
+  type: ClusterIP
+  volumeClaims:
+    mysqlConfig:
+      requests:
+        storage: 100Mi
+    mysqlData:
+      requests:
+        storage: 100Mi

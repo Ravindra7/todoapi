@@ -14,9 +14,22 @@ spec:
     spec:
       containers:
         - name: todo-app-container
-          image: vijaynvb/todomyapi:1.0
+          image: demoapp:1.0
           ports:
             - containerPort: 8081
+          env:                  # Environment variables supplied to the Pod
+          - name: MYSQL_USER # Name of the environment variable
+            value: sample
+         #   valueFrom:          # Get the value of environment variable from kubernetes secrets
+         #    secretKeyRef:
+         #     name: mysql-user-pass
+         #     key: username
+          - name: MYSQL_PASSWORD
+            value: sample
+         #   valueFrom:
+         #    secretKeyRef:
+         #      name: mysql-root-pass
+         #      key: password
 
 ---
 apiVersion: v1

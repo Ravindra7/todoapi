@@ -1,0 +1,38 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "todoapiapp.fullname" . }}-deployment
+  labels:
+  {{- include "todoapiapp.labels" . | nindent 4 }}
+spec:
+  replicas: {{ .Values.deployment.replicas }}
+  selector:
+    matchLabels:
+      app: todo-app
+    {{- include "todoapiapp.selectorLabels" . | nindent 6 }}
+  template:
+    metadata:
+      labels:
+        app: todo-app
+      {{- include "todoapiapp.selectorLabels" . | nindent 8 }}
+    spec:
+      containers:
+      - env:
+        - name: MYSQL_HOST
+          value: {{ quote .Values.deployment.todoAppContainer.env.mysqlHost }}
+        - name: MYSQL_PORT
+          value: {{ quote .Values.deployment.todoAppContainer.env.mysqlPort }}
+        - name: MYSQL_USER
+          value: {{ quote .Values.deployment.todoAppContainer.env.mysqlUser }}
+        - name: MYSQL_PASSWORD
+          value: {{ quote .Values.deployment.todoAppContainer.env.mysqlPassword }}
+        - name: MYSQL_DB
+          value: {{ quote .Values.deployment.todoAppContainer.env.mysqlDb }}
+        - name: KUBERNETES_CLUSTER_DOMAIN
+          value: {{ quote .Values.kubernetesClusterDomain }}
+        image: {{ .Values.deployment.todoAppContainer.image.repository }}:{{ .Values.deployment.todoAppContainer.image.tag
+          | default .Chart.AppVersion }}
+        name: todo-app-container
+        ports:
+        - containerPort: 8081
+        resources: {}

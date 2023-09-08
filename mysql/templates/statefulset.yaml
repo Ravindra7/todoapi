@@ -1,0 +1,96 @@
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: {{ include "mysqlchart.fullname" . }}-mysql
+  labels:
+   app: mysql
+spec:
+  selector:
+    matchLabels:
+      app: mysql
+  serviceName: {{ .Values.mysql.servicename }}
+  template:
+    metadata:
+      labels:
+        app: mysql
+    spec:
+      containers:
+      - env:
+        - name: DB_USER
+          valueFrom:
+            secretKeyRef:
+              key: username
+              name: {{ include "mysqlchart.fullname" . }}-dbsecret
+        - name: DB_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              key: password
+              name: {{ include "mysqlchart.fullname" . }}-dbsecret
+        - name: MYSQL_DATABASE
+          valueFrom:
+            secretKeyRef:
+              key: dbname
+              name: {{ include "mysqlchart.fullname" . }}-dbsecret
+        - name: MYSQL_ROOT_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              key: rootpassword
+              name: {{ include "mysqlchart.fullname" . }}-dbsecret
+        - name: KUBERNETES_CLUSTER_DOMAIN
+          value: {{ quote .Values.kubernetesClusterDomain }}
+        image: {{ .Values.mysql.mysql.image.repository }}:{{ .Values.mysql.mysql.image.tag
+          | default .Chart.AppVersion }}
+        name: mysql
+        ports:
+        - containerPort: 3306
+        resources: {}
+        volumeMounts:
+        - mountPath: /var/lib/mysql
+          name: mysql-data
+        - mountPath: /docker-entrypoint-initdb.d
+          name: mysql-config
+      initContainers:
+      - args: {{- toYaml .Values.mysql.envsubst.args | nindent 8 }}
+        env:
+        - name: DB_USER
+          valueFrom:
+            secretKeyRef:
+              key: username
+              name: {{ include "mysqlchart.fullname" . }}-dbsecret
+        - name: DB_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              key: password
+              name: {{ include "mysqlchart.fullname" . }}-dbsecret
+        - name: KUBERNETES_CLUSTER_DOMAIN
+          value: {{ quote .Values.kubernetesClusterDomain }}
+        image: {{ .Values.mysql.envsubst.image.repository }}:{{ .Values.mysql.envsubst.image.tag
+          | default .Chart.AppVersion }}
+        name: envsubst
+        resources: {}
+        volumeMounts:
+        - mountPath: /create-user.sql
+          name: mysql-inituser
+          subPath: create-user.sql
+        - mountPath: /docker-entrypoint-initdb.d
+          name: mysql-config
+      volumes:
+      - configMap:
+          name: {{ include "mysqlchart.fullname" . }}-dbusers
+        name: mysql-inituser
+  updateStrategy: {}
+  volumeClaimTemplates:
+  - metadata:
+      creationTimestamp: null
+      name: mysql-data
+    spec:
+      accessModes:
+      - ReadWriteMany
+      resources: {{ .Values.mysql.volumeClaims.mysqlData | toYaml | nindent 8 }}
+  - metadata:
+      creationTimestamp: null
+      name: mysql-config
+    spec:
+      accessModes:
+      - ReadWriteMany
+      resources: {{ .Values.mysql.volumeClaims.mysqlConfig | toYaml | nindent 8 }}
