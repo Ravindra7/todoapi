@@ -1,0 +1,64 @@
+pipeline {
+    agent any
+
+    
+    stages {
+        stage('Checkout') {
+            steps {
+                checkout scmGit(branches: [[name: '*/master']], extensions: [], userRemoteConfigs: [[credentialsId: '25d232ab-ba92-4b54-a06f-f91114575057', url: 'https://github.com/Ravindra7/todoapi.git']])
+                echo 'successful checkout'
+            }
+        }
+
+        stage('Build and Package') {
+            steps {
+                withMaven(maven: 'Maven') {
+                    sh 'mvn clean install'
+                  echo 'successful Build and Package'
+                }
+            }
+        }
+        stage('Build Docker Image') {
+            steps {
+                script {
+                    def imageTag = "ravindrl/todoapiapp:jenkins-1.0"
+                    docker.build(imageTag, '.')
+                    echo 'successful Build Docker Image'
+                }
+            }
+        }
+        
+        stage('Push to Docker Hub') {
+            steps {
+                script {
+                    withDockerRegistry(credentialsId: '70c70549-1200-41bc-b949-0c1860aa9ecc', url: 'https://index.docker.io/v1/') {
+                        def imageTag = "ravindrl/todoapiapp:jenkins-1.0"
+                        docker.image(imageTag).push()
+                        echo 'successful Push to Docker Hub'
+                    }
+                }
+            }
+        }
+        stage('Deploy to Mysql DB to Kubenetes') {
+            steps {
+                script {
+                  kubeconfig(credentialsId: 'dba7a123-f476-4763-bbe5-44c7069124d3', serverUrl: 'https://kubernetes.docker.internal:6443')  {
+                    def kubeConfig = readFile 'kubernetes-config.yaml'
+                    sh "kubectl apply -f mysqlDBApp.yaml"
+                    }
+               }
+            }
+        }
+        stage('Deploy to TodoApi App to Kubenetes') {
+            steps {
+                script {
+                  kubeconfig(credentialsId: 'dba7a123-f476-4763-bbe5-44c7069124d3', serverUrl: 'https://kubernetes.docker.internal:6443')  {
+                    def kubeConfig = readFile 'kubernetes-config.yaml'
+                    sh "kubectl apply -f todoApiApp.yaml"
+                    }
+               }
+            }
+        }
+        
+    }
+}
